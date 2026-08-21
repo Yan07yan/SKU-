@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SKU 图片工作流看板</title>
+    <link rel="stylesheet" href="/app.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>SKU 图片工作流看板</h1>
+        <p>Excel 入库、图片生成、素材校验、状态回写</p>
+      </div>
+      <div class="topActions">
+        <div id="quotaBadge" class="quota unknown">额度：未知</div>
+        <div id="apiKeyStatus" class="apiKeyStatus hidden"></div>
+        <button id="apiKeyOpenBtn" class="loginButton" type="button">配置本地服务</button>
+        <div id="membershipInfo" class="membership hidden">会员状态：订阅有效</div>
+      </div>
+    </header>
+
+    <main>
+      <section id="codexAuthBanner" class="authBanner unknown">
+        <span id="codexAuthText">正在检测 Codex 本地服务配置状态...</span>
+      </section>
+
+      <section class="toolbar">
+        <label class="upload">
+          上传 Excel
+          <input id="excelInput" type="file" accept=".xlsx,.xlsm" />
+        </label>
+        <button id="startBtn">开始生成</button>
+        <button id="pauseBtn" type="button">暂停生成</button>
+        <button id="stopBtn" type="button">停止生成</button>
+        <span id="queueProgress" class="queueProgress">队列：空闲</span>
+        <button id="batchDownloadBtn" type="button">批量下载</button>
+        <button id="deleteSelectedBtn" type="button">删除选中</button>
+        <a class="button" href="/api/export">一键导出 Excel</a>
+        <input id="searchInput" type="search" placeholder="搜索 SKU 或商品名" />
+      </section>
+
+      <section id="stats" class="stats"></section>
+
+      <section class="filters" id="filters"></section>
+
+      <section class="layout">
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th><input id="selectAllRows" type="checkbox" /></th>
+                <th>SKU</th>
+                <th>SPU</th>
+                <th>颜色</th>
+                <th>商品名称</th>
+                <th>状态</th>
+                <th>图片</th>
+                <th>错误</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="taskRows"></tbody>
+          </table>
+        </div>
+        <aside id="preview" class="preview">
+          <div class="empty">选择一行预览素材</div>
+        </aside>
+      </section>
+    </main>
+
+    <button id="manualOpen" class="floating">+ 手动新增 SKU</button>
+
+    <dialog id="manualDialog">
+      <form id="manualForm">
+        <h2>手动新增 SKU</h2>
+        <label>SKU<input name="sku" required /></label>
+        <label>商品名称<input name="product_name" required /></label>
+        <label>生图提示词<textarea name="prompt" required rows="5"></textarea></label>
+        <menu>
+          <button type="button" id="manualCancel">取消</button>
+          <button type="submit">保存</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="apiKeyDialog">
+      <form id="apiKeyForm">
+        <h2>配置 Codex 本地服务</h2>
+        <div class="keyInputRow">
+          <input id="apiKeyInput" name="api_base_url" type="text" placeholder="请输入 Cockpit 提供的本地 API 地址，如 http://127.0.0.1:8080" autocomplete="off" required />
+        </div>
+        <div class="keyInputRow">
+          <input id="accessTokenInput" name="access_token" type="password" placeholder="请输入 Cockpit Access Token" autocomplete="off" />
+          <button id="accessTokenToggle" type="button">显示</button>
+        </div>
+        <p class="hint">此地址为 Cockpit 等工具在本地开启的 API 服务，用于通过 ChatGPT Plus 会员生图。</p>
+        <details class="helpDetails">
+          <summary>如何获取？</summary>
+          <ol>
+            <li>安装并打开 Cockpit Tools</li>
+            <li>在 Cockpit 中登录 ChatGPT Plus 账号</li>
+            <li>启用“API 服务”或“本地代理”功能</li>
+            <li>复制显示的本地地址，例如 <code>http://127.0.0.1:8080</code></li>
+          </ol>
+        </details>
+        <p id="apiKeyMessage" class="formMessage"></p>
+        <menu>
+          <button type="button" id="apiKeyCancel">取消</button>
+          <button type="submit">保存配置</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
