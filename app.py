@@ -1,8 +1,12 @@
 import base64
+<<<<<<< HEAD
 import argparse
 import colorsys
 import json
 import mimetypes
+=======
+import json
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 import os
 import shutil
 import sqlite3
@@ -13,8 +17,11 @@ import time
 import traceback
 import uuid
 import zipfile
+<<<<<<< HEAD
 from copy import copy
 from io import BytesIO
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 from datetime import datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -24,7 +31,10 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request as UrlRequest, urlopen
 
 from openpyxl import Workbook, load_workbook
+<<<<<<< HEAD
 from openpyxl.utils import get_column_letter
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 from PIL import Image
 
 try:
@@ -50,13 +60,19 @@ except Exception:
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "tasks.db"
+<<<<<<< HEAD
 CONFIG_PATH = BASE_DIR / "app_config.json"
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 OUTPUT_DIR = BASE_DIR / "output"
 IMPORT_DIR = BASE_DIR / "imports"
 EXPORT_DIR = BASE_DIR / "exports"
 LOG_DIR = BASE_DIR / "logs"
 STATIC_DIR = BASE_DIR / "static"
+<<<<<<< HEAD
 EXCEL_ONLY_MODE = True
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 
 STATUSES = {
     "pending",
@@ -66,9 +82,12 @@ STATUSES = {
     "quality_failed",
     "waiting_confirm",
     "awaiting_confirm",
+<<<<<<< HEAD
     "detail_generating",
     "detail_done",
     "detail_failed",
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     "approved",
     "rejected",
     "failed",
@@ -83,9 +102,12 @@ STATUS_LABELS = {
     "quality_failed": "质检失败",
     "waiting_confirm": "待确认",
     "awaiting_confirm": "待确认",
+<<<<<<< HEAD
     "detail_generating": "详情页生成中",
     "detail_done": "详情页完成",
     "detail_failed": "详情页失败",
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     "approved": "已通过",
     "rejected": "已驳回",
     "failed": "真失败",
@@ -94,7 +116,10 @@ STATUS_LABELS = {
 
 IMAGE_DELAY_SECONDS = 3
 IMAGE_TIMEOUT_SECONDS = 900
+<<<<<<< HEAD
 HTTP_IMAGE_TIMEOUT_SECONDS = 300
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 LOCAL_IMAGE_PATHS = (
     "/v1/images/generations",
     "/api/images/generations",
@@ -104,10 +129,13 @@ queue_lock = threading.Lock()
 worker_lock = threading.Lock()
 worker_running = False
 queue_control = {"state": "idle", "pause_requested": False, "stop_requested": False}
+<<<<<<< HEAD
 detail_lock = threading.Lock()
 detail_worker_running = False
 detail_queue = []
 detail_progress_state = {"state": "idle", "completed": 0, "total": 0, "message": ""}
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 quota_state = {"status": "unknown", "message": "尚未检测", "updated_at": None}
 api_config_state = {"authenticated": False, "message": "尚未配置本地服务地址", "updated_at": None}
 
@@ -154,9 +182,12 @@ def connect():
 
 def init_db():
     ensure_dirs()
+<<<<<<< HEAD
     if EXCEL_ONLY_MODE:
         print("Excel-only 模式：任务状态直接读写 Excel，不再初始化 tasks.db", flush=True)
         return
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     with connect() as conn:
         conn.execute(
             """
@@ -176,6 +207,7 @@ def init_db():
                 add_logo TEXT,
                 logo_path TEXT,
                 brand_check TEXT,
+<<<<<<< HEAD
                 reference_image_path TEXT,
                 scene_description TEXT,
                 detail_style TEXT,
@@ -186,6 +218,8 @@ def init_db():
                 detail_generated_at TEXT,
                 detail_progress TEXT,
                 ai_title TEXT,
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
                 optimized_prompt TEXT,
                 prompt_snapshot TEXT,
                 generated_at TEXT,
@@ -209,6 +243,7 @@ def init_db():
             "add_logo": "ALTER TABLE tasks ADD COLUMN add_logo TEXT",
             "logo_path": "ALTER TABLE tasks ADD COLUMN logo_path TEXT",
             "brand_check": "ALTER TABLE tasks ADD COLUMN brand_check TEXT",
+<<<<<<< HEAD
             "reference_image_path": "ALTER TABLE tasks ADD COLUMN reference_image_path TEXT",
             "scene_description": "ALTER TABLE tasks ADD COLUMN scene_description TEXT",
             "detail_style": "ALTER TABLE tasks ADD COLUMN detail_style TEXT",
@@ -219,6 +254,8 @@ def init_db():
             "detail_generated_at": "ALTER TABLE tasks ADD COLUMN detail_generated_at TEXT",
             "detail_progress": "ALTER TABLE tasks ADD COLUMN detail_progress TEXT",
             "ai_title": "ALTER TABLE tasks ADD COLUMN ai_title TEXT",
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
             "optimized_prompt": "ALTER TABLE tasks ADD COLUMN optimized_prompt TEXT",
             "prompt_snapshot": "ALTER TABLE tasks ADD COLUMN prompt_snapshot TEXT",
             "generated_at": "ALTER TABLE tasks ADD COLUMN generated_at TEXT",
@@ -265,11 +302,15 @@ def normalize_row(headers, values):
 
 
 def normalize_header_name(value):
+<<<<<<< HEAD
     return str(value or "").replace("\u00a0", " ").strip().replace("：", ":").rstrip(":").lower()
 
 
 def normalize_excel_column_name(value):
     return str(value or "").replace("\u00a0", " ").strip()
+=======
+    return str(value or "").strip().replace("：", ":").rstrip(":").lower()
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 
 
 def pick_field(data, candidates):
@@ -283,6 +324,7 @@ def pick_field(data, candidates):
     return ""
 
 
+<<<<<<< HEAD
 def parse_int_field(value, default=0, minimum=None, maximum=None):
     text = str(value or "").strip()
     if not text:
@@ -298,6 +340,8 @@ def parse_int_field(value, default=0, minimum=None, maximum=None):
     return number
 
 
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 def strip_image_name_suffix(value, image_name):
     text = (value or "").strip()
     suffix = (image_name or "").strip()
@@ -319,6 +363,7 @@ def strip_image_name_suffix(value, image_name):
     return text
 
 
+<<<<<<< HEAD
 def split_list_text(value):
     text = (value or "").strip()
     if not text:
@@ -367,6 +412,17 @@ def import_excel(path, table_mode="auto"):
     set_config("last_import_path", str(path.resolve()))
     set_config("last_import_table_mode", resolved_mode)
     set_config("last_import_sheet", ws.title)
+=======
+def import_excel(path):
+    wb = load_workbook(path)
+    ws = wb.active
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        return {"imported": 0, "updated": 0, "skipped": 0}
+
+    headers = ["" if cell is None else str(cell).strip() for cell in rows[0]]
+    stats = {"imported": 0, "updated": 0, "skipped": 0}
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     spu_color_counters = {}
     with connect() as conn:
         for row in conn.execute("SELECT spu, image_name FROM tasks WHERE spu IS NOT NULL AND image_name IS NOT NULL").fetchall():
@@ -374,6 +430,7 @@ def import_excel(path, table_mode="auto"):
             prefix = image_name.split("_", 1)[0]
             if prefix.isdigit():
                 spu_color_counters[row["spu"]] = max(spu_color_counters.get(row["spu"], 0), int(prefix))
+<<<<<<< HEAD
         for values in data_rows:
             data = normalize_row(headers, list(values) + [None] * (len(headers) - len(values)))
             if resolved_mode == "new":
@@ -382,6 +439,11 @@ def import_excel(path, table_mode="auto"):
             else:
                 raw_spu = pick_field(data, ["SPU", "spu", "产品系列编号", "系列编号", "产品系列", "款号"])
                 excel_sku = pick_field(data, ["SKU", "sku", "货号", "商品编码"])
+=======
+        for values in rows[1:]:
+            data = normalize_row(headers, list(values) + [None] * (len(headers) - len(values)))
+            raw_spu = pick_field(data, ["SPU", "spu", "产品系列编号", "系列编号", "产品系列", "款号"])
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
             color_name = pick_field(data, ["图片颜色", "颜色名称", "颜色", "Color", "color_name"])
             image_name = pick_field(data, ["图片命名", "image_name"])
             spu = strip_image_name_suffix(raw_spu, image_name)
@@ -392,8 +454,14 @@ def import_excel(path, table_mode="auto"):
                 image_name = f"{next_index:02d}_{color_name}"
                 image_name_source = "auto_color"
                 spu = strip_image_name_suffix(raw_spu, image_name)
+<<<<<<< HEAD
             sku = spu or image_name or excel_sku
             sku_source = "new_sku" if resolved_mode == "new" and sku else ("spu" if spu else ("image_name" if image_name else "excel_sku"))
+=======
+            excel_sku = pick_field(data, ["SKU", "sku", "货号", "商品编码"])
+            sku = spu or image_name or excel_sku
+            sku_source = "spu" if spu else ("image_name" if image_name else "excel_sku")
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
             if not sku:
                 stats["skipped"] += 1
                 continue
@@ -421,11 +489,14 @@ def import_excel(path, table_mode="auto"):
             add_logo = pick_field(data, ["是否添加品牌logo", "是否添加品牌Logo", "add_logo"])
             logo_path = pick_field(data, ["logo文件地址", "Logo文件地址", "logo_path"])
             brand_check = pick_field(data, ["需校验品牌文字/元素", "brand_check"])
+<<<<<<< HEAD
             reference_image_path = pick_field(data, ["参考图地址", "reference_image_path", "参考图", "参考图片"])
             scene_description = pick_field(data, ["场景描述", "scene_description", "使用场景"])
             detail_style = pick_field(data, ["详情页风格", "detail_style", "风格"])
             detail_prompt = pick_field(data, ["详情页提示词", "detail_prompt", "详情提示词", "详情页生图提示词"])
             detail_count = parse_int_field(pick_field(data, ["详情页数量", "detail_count", "详情图数量"]), default=6, minimum=1, maximum=20)
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
             raw_json = json.dumps(data, ensure_ascii=False)
             existing = conn.execute("SELECT id, sku FROM tasks WHERE sku = ?", (sku,)).fetchone()
             if not existing and spu and image_name:
@@ -441,8 +512,12 @@ def import_excel(path, table_mode="auto"):
                     UPDATE tasks
                     SET sku = ?, product_name = ?, prompt = ?, raw_json = ?, spu = ?, color_code = ?,
                         color_name = ?, image_name = ?, add_logo = ?, logo_path = ?, brand_check = ?,
+<<<<<<< HEAD
                         reference_image_path = ?, scene_description = ?, detail_style = ?,
                         detail_prompt = ?, detail_count = ?, prompt_snapshot = ?, updated_at = ?
+=======
+                        prompt_snapshot = ?, updated_at = ?
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
                     WHERE id = ?
                     """,
                     (
@@ -457,11 +532,14 @@ def import_excel(path, table_mode="auto"):
                         add_logo,
                         logo_path,
                         brand_check,
+<<<<<<< HEAD
                         reference_image_path,
                         scene_description,
                         detail_style,
                         detail_prompt,
                         detail_count,
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
                         prompt,
                         now_iso(),
                         existing["id"],
@@ -474,11 +552,18 @@ def import_excel(path, table_mode="auto"):
                     """
                     INSERT INTO tasks(
                         sku, product_name, prompt, raw_json, spu, color_code, color_name,
+<<<<<<< HEAD
                         image_name, add_logo, logo_path, brand_check, reference_image_path,
                         scene_description, detail_style, detail_prompt, detail_count, prompt_snapshot,
                         status, created_at, updated_at
                     )
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+=======
+                        image_name, add_logo, logo_path, brand_check, prompt_snapshot,
+                        status, created_at, updated_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
                     """,
                     (
                         sku,
@@ -492,11 +577,14 @@ def import_excel(path, table_mode="auto"):
                         add_logo,
                         logo_path,
                         brand_check,
+<<<<<<< HEAD
                         reference_image_path,
                         scene_description,
                         detail_style,
                         detail_prompt,
                         detail_count,
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
                         prompt,
                         now_iso(),
                         now_iso(),
@@ -539,10 +627,13 @@ def list_tasks(status=None, q=None):
         task["status_label"] = STATUS_LABELS.get(task["status"], task["status"])
         if task["status"] == "generating" and task.get("generation_progress"):
             task["status_label"] = task["generation_progress"]
+<<<<<<< HEAD
         if task["status"] == "detail_generating" and task.get("detail_progress"):
             task["status_label"] = task["detail_progress"]
         if task["status"] == "detail_failed" and task.get("detail_error") and not task.get("error_message"):
             task["error_message"] = task["detail_error"]
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
         task["raw"] = json.loads(task["raw_json"] or "{}")
     return tasks
 
@@ -554,6 +645,7 @@ def add_manual_task(payload):
     sku = spu or sku_input or image_name
     product_name = (payload.get("product_name") or "").strip()
     prompt = (payload.get("prompt") or "").strip()
+<<<<<<< HEAD
     detail_prompt = (payload.get("detail_prompt") or payload.get("详情页提示词") or "").strip()
     detail_count = parse_int_field(payload.get("detail_count") or payload.get("详情页数量"), default=6, minimum=1, maximum=20)
     if not sku or not product_name or not prompt:
@@ -566,6 +658,18 @@ def add_manual_task(payload):
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
             """,
             (sku, product_name, prompt, json.dumps(raw, ensure_ascii=False), spu, image_name, detail_prompt, detail_count, now_iso(), now_iso()),
+=======
+    if not sku or not product_name or not prompt:
+        raise ValueError("SKU、商品名称、生图提示词均为必填")
+    raw = {"SKU": sku, "SPU": spu, "图片命名": image_name, "商品名称": product_name, "生图提示词": prompt}
+    with connect() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO tasks(sku, product_name, prompt, raw_json, spu, image_name, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+            """,
+            (sku, product_name, prompt, json.dumps(raw, ensure_ascii=False), spu, image_name, now_iso(), now_iso()),
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
         )
         log_event(conn, cur.lastrowid, sku, "manual_add", "Manual task created")
 
@@ -668,6 +772,17 @@ def folder_image_name_for_task(task):
 def image_folder_for_task(task):
     spu_folder = safe_path_part(folder_spu_for_task(task), task.get("sku") or "unknown")
     folder_path = OUTPUT_DIR / spu_folder
+<<<<<<< HEAD
+=======
+    print(
+        "DEBUG path:",
+        f"sku={task.get('sku')}",
+        f"spu={task.get('spu')}",
+        f"image_name={task.get('image_name')}",
+        f"folder={folder_path}",
+        flush=True,
+    )
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     return folder_path
 
 
@@ -714,6 +829,7 @@ def decode_config_value(value):
     return base64.b64decode((value or "").encode("ascii")).decode("utf-8")
 
 
+<<<<<<< HEAD
 def load_config_store():
     if not CONFIG_PATH.exists():
         return {}
@@ -734,6 +850,9 @@ def set_config(key, value):
         data[key] = value
         save_config_store(data)
         return
+=======
+def set_config(key, value):
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     with connect() as conn:
         conn.execute(
             """
@@ -746,6 +865,7 @@ def set_config(key, value):
 
 
 def get_config(key):
+<<<<<<< HEAD
     if EXCEL_ONLY_MODE:
         value = load_config_store().get(key)
         if value in ("", None) and DB_PATH.exists():
@@ -759,6 +879,8 @@ def get_config(key):
             except Exception:
                 value = None
         return value if value not in ("", None) else None
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     with connect() as conn:
         row = conn.execute("SELECT value FROM config WHERE key = ?", (key,)).fetchone()
     if not row or not row["value"]:
@@ -859,6 +981,7 @@ def mask_headers(headers):
     return masked
 
 
+<<<<<<< HEAD
 def mask_payload(payload):
     masked = dict(payload)
     for key in ("reference_image", "input_image", "image"):
@@ -881,6 +1004,8 @@ def mask_payload(payload):
     return masked
 
 
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 def print_local_api_config():
     api_base_url = get_config("api_base_url") or "未配置"
     access_token = get_config("access_token")
@@ -915,10 +1040,17 @@ def post_local_image_api(api_base_url, payload, headers):
         endpoint = api_base_url.rstrip("/") + path
         print(f"DEBUG image request URL: {endpoint}", flush=True)
         print(f"DEBUG image request Headers: {json.dumps(mask_headers(headers), ensure_ascii=False)}", flush=True)
+<<<<<<< HEAD
         print(f"DEBUG image request Payload: {json.dumps(mask_payload(payload), ensure_ascii=False)}", flush=True)
         try:
             if requests is not None:
                 response = requests.post(endpoint, json=payload, headers=headers, timeout=HTTP_IMAGE_TIMEOUT_SECONDS)
+=======
+        print(f"DEBUG image request Payload: {json.dumps(payload, ensure_ascii=False)}", flush=True)
+        try:
+            if requests is not None:
+                response = requests.post(endpoint, json=payload, headers=headers, timeout=60)
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
                 if response.status_code == 404:
                     last_error = RuntimeError(f"404 - {response.text}")
                     print(f"DEBUG endpoint returned 404, trying next path: {path}", flush=True)
@@ -933,7 +1065,11 @@ def post_local_image_api(api_base_url, payload, headers):
                 method="POST",
             )
             try:
+<<<<<<< HEAD
                 with urlopen(request, timeout=HTTP_IMAGE_TIMEOUT_SECONDS) as response:
+=======
+                with urlopen(request, timeout=60) as response:
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
                     return json.loads(response.read().decode("utf-8"))
             except HTTPError as exc:
                 if exc.code == 404:
@@ -949,6 +1085,7 @@ def post_local_image_api(api_base_url, payload, headers):
     raise RuntimeError(f"所有图片生成端点都返回 404，请确认 Cockpit API 路径是否正确：{last_error}")
 
 
+<<<<<<< HEAD
 def resolve_local_path(path_text):
     path = Path(path_text or "")
     if not path_text:
@@ -1018,10 +1155,18 @@ def call_image_api(prompt, image_file, reference_image_path=""):
     reference, reference_note = reference_payload(reference_image_path)
     base_payload = {
         "prompt": prompt + reference_note,
+=======
+def generate_image_with_api(prompt, image_file):
+    api_base_url = require_api_base_url()
+    debug_print_registered_routes()
+    payload = {
+        "prompt": prompt,
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
         "size": "1024x1024",
         "n": 1,
     }
     headers = local_api_headers()
+<<<<<<< HEAD
     if reference:
         last_reference_error = None
         for variant_name, payload in reference_payload_variants(base_payload, reference):
@@ -1041,6 +1186,9 @@ def call_image_api(prompt, image_file, reference_image_path=""):
             data = post_local_image_api(api_base_url, base_payload, headers)
     else:
         data = post_local_image_api(api_base_url, base_payload, headers)
+=======
+    data = post_local_image_api(api_base_url, payload, headers)
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 
     item = (data.get("data") or [{}])[0]
     if item.get("b64_json"):
@@ -1048,18 +1196,27 @@ def call_image_api(prompt, image_file, reference_image_path=""):
         return
     if item.get("url"):
         if requests is not None:
+<<<<<<< HEAD
             image_response = requests.get(item["url"], headers=headers, timeout=HTTP_IMAGE_TIMEOUT_SECONDS)
+=======
+            image_response = requests.get(item["url"], headers=headers, timeout=60)
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
             if image_response.status_code >= 400:
                 raise RuntimeError(f"{image_response.status_code} - {image_response.text}")
             image_file.write_bytes(image_response.content)
         else:
             image_request = UrlRequest(item["url"], headers=headers, method="GET")
+<<<<<<< HEAD
             with urlopen(image_request, timeout=HTTP_IMAGE_TIMEOUT_SECONDS) as response:
+=======
+            with urlopen(image_request, timeout=60) as response:
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
                 image_file.write_bytes(response.read())
         return
     raise RuntimeError("本地图片 API 返回为空，未找到图片数据")
 
 
+<<<<<<< HEAD
 def generate_image_with_api(prompt, image_file, reference_image_path=""):
     debug_print_registered_routes()
     return call_image_api(prompt, image_file, reference_image_path)
@@ -1067,6 +1224,33 @@ def generate_image_with_api(prompt, image_file, reference_image_path=""):
 
 def generate_single_image(prompt, image_file, reference_image_path=""):
     return call_image_api(prompt, image_file, reference_image_path)
+=======
+def generate_single_image(prompt, image_file):
+    api_base_url = require_api_base_url()
+    payload = {
+        "prompt": prompt,
+        "size": "1024x1024",
+        "n": 1,
+    }
+    headers = local_api_headers()
+    data = post_local_image_api(api_base_url, payload, headers)
+    item = (data.get("data") or [{}])[0]
+    if item.get("b64_json"):
+        image_file.write_bytes(base64.b64decode(item["b64_json"]))
+        return
+    if item.get("url"):
+        if requests is not None:
+            image_response = requests.get(item["url"], headers=headers, timeout=60)
+            if image_response.status_code >= 400:
+                raise RuntimeError(f"{image_response.status_code} - {image_response.text}")
+            image_file.write_bytes(image_response.content)
+        else:
+            image_request = UrlRequest(item["url"], headers=headers, method="GET")
+            with urlopen(image_request, timeout=60) as response:
+                image_file.write_bytes(response.read())
+        return
+    raise RuntimeError("本地图片 API 返回为空，未找到图片数据")
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 
 
 def compose_nine_grid(image_files, output_file):
@@ -1142,6 +1326,7 @@ def run_image_for_task(task):
 
     try:
         image_files = []
+<<<<<<< HEAD
         colors = split_list_text(task.get("color_name"))
         for index in range(1, 10):
             image_file = sku_dir / f"{index}.png"
@@ -1155,15 +1340,24 @@ def run_image_for_task(task):
                 single_prompt += f"\nRequired product color/material element for this image: {color_hint}."
             else:
                 single_prompt += "\nKeep the same product, vary composition subtly."
+=======
+        for index in range(1, 10):
+            image_file = sku_dir / f"{index}.png"
+            single_prompt = f"{optimized_prompt}\nVariant {index} of 9. Keep the same product and color, vary composition subtly."
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
             with connect() as conn:
                 conn.execute(
                     "UPDATE tasks SET generation_progress = ?, updated_at = ? WHERE id = ?",
                     (f"生成中({index}/9)", now_iso(), task["id"]),
                 )
+<<<<<<< HEAD
             if image_file.exists():
                 print(f"DEBUG image exists, skipped: sku={task.get('sku')} file={image_file}", flush=True)
             else:
                 generate_single_image(single_prompt, image_file, task.get("reference_image_path") or "")
+=======
+            generate_single_image(single_prompt, image_file)
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
             if not image_file.exists():
                 raise RuntimeError(f"第 {index} 张图片未生成")
             print(f"DEBUG image saved: sku={task.get('sku')} file={image_file}", flush=True)
@@ -1300,6 +1494,7 @@ def rerun_collage_for_sku(sku):
         raise
 
 
+<<<<<<< HEAD
 DETAIL_PROMPT_TYPES = [
     ("detail_1.png", "平铺展示图 — 产品完整展开，适合详情页首屏"),
     ("detail_2.png", "近景细节图 — 材质、纹理特写"),
@@ -1525,6 +1720,8 @@ def detail_status():
     return status
 
 
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 def mark_generation_error(task, message):
     current_status = get_task(task["id"])
     is_collage_stage = current_status and current_status.get("status") == "collaging"
@@ -1730,7 +1927,11 @@ def main_image_path_for_task(task):
     return None
 
 
+<<<<<<< HEAD
 def image_files_for_task(task, image_type="all"):
+=======
+def image_files_for_task(task):
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     if not task:
         return []
     folders = []
@@ -1741,6 +1942,7 @@ def image_files_for_task(task, image_type="all"):
     files = []
     seen = set()
 
+<<<<<<< HEAD
     if image_type in ("all", "white"):
         for index in range(1, 10):
             for folder in folders:
@@ -1769,6 +1971,23 @@ def image_files_for_task(task, image_type="all"):
                         files.append((filename, candidate))
                         seen.add(resolved)
                     break
+=======
+    for index in range(1, 10):
+        for folder in folders:
+            candidate = folder / f"{index}.png"
+            if candidate.exists():
+                resolved = candidate.resolve()
+                if resolved not in seen:
+                    files.append((f"{index}.png", candidate))
+                    seen.add(resolved)
+                break
+
+    main_path = main_image_path_for_task(task)
+    if main_path and main_path.exists():
+        resolved = main_path.resolve()
+        if resolved not in seen:
+            files.append(("主图.png", main_path))
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 
     return files
 
@@ -1803,7 +2022,11 @@ def output_url_for_path(path):
 
 def image_list_for_sku(sku):
     task = get_task_by_sku(str(sku))
+<<<<<<< HEAD
     files = image_files_for_task(task, "all")
+=======
+    files = image_files_for_task(task)
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     return [
         {
             "name": name,
@@ -1814,9 +2037,15 @@ def image_list_for_sku(sku):
     ]
 
 
+<<<<<<< HEAD
 def zip_all_images_for_sku(sku, image_type="all"):
     task = get_task_by_sku(str(sku))
     files = image_files_for_task(task, image_type)
+=======
+def zip_all_images_for_sku(sku):
+    task = get_task_by_sku(str(sku))
+    files = image_files_for_task(task)
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     if not files:
         raise ValueError("该 SKU 暂无可下载图片")
 
@@ -1828,7 +2057,11 @@ def zip_all_images_for_sku(sku, image_type="all"):
     return zip_path
 
 
+<<<<<<< HEAD
 def zip_images_for_skus(skus, image_type="all"):
+=======
+def zip_images_for_skus(skus):
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     EXPORT_DIR.mkdir(exist_ok=True)
     filename = zip_filename_for_skus(skus)
     zip_path = EXPORT_DIR / filename
@@ -1837,7 +2070,11 @@ def zip_images_for_skus(skus, image_type="all"):
         for sku in skus:
             task = get_task_by_sku(str(sku))
             folder_name = download_base_name_for_task(task, str(sku))
+<<<<<<< HEAD
             for arcname, image_path in image_files_for_task(task, image_type):
+=======
+            for arcname, image_path in image_files_for_task(task):
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
                 archive.write(image_path, arcname=f"{folder_name}/{arcname}")
                 added += 1
     if added == 0:
@@ -1866,6 +2103,7 @@ def delete_tasks_by_skus(skus):
 def export_generation_status(status):
     if status in ("waiting_confirm", "awaiting_confirm", "approved"):
         return "成功"
+<<<<<<< HEAD
     if status == "detail_done":
         return "已完成"
     if status == "detail_generating":
@@ -2887,13 +3125,78 @@ def app_state():
     counts = {}
     for task in excel_load_tasks():
         counts[task["status"]] = counts.get(task["status"], 0) + 1
+=======
+    if status in ("failed", "collaging_failed", "quality_failed", "rejected", "quota_exhausted"):
+        return "失败"
+    return "待生成"
+
+
+def export_excel():
+    EXPORT_DIR.mkdir(exist_ok=True)
+    filename = f"erp_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    path = EXPORT_DIR / filename
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "ERP导出"
+    columns = [
+        "SPU",
+        "图片生成提示词",
+        "图片颜色",
+        "图片命名",
+        "是否添加品牌logo",
+        "logo文件地址",
+        "需校验品牌文字/元素",
+        "优化后提示词",
+        "提示词原文快照",
+        "生成状态",
+        "失败原因",
+        "生成时间",
+        "输出文件地址",
+        "SKU",
+    ]
+    ws.append(columns)
+    with connect() as conn:
+        rows = conn.execute("SELECT * FROM tasks ORDER BY id ASC").fetchall()
+    for row in rows:
+        ws.append(
+            [
+                row["spu"] or "",
+                row["prompt"] or "",
+                row["color_name"] or "",
+                row["image_name"] or "",
+                row["add_logo"] or "",
+                row["logo_path"] or "",
+                row["brand_check"] or "",
+                row["optimized_prompt"] or "",
+                row["prompt_snapshot"] or "",
+                export_generation_status(row["status"]),
+                row["error_message"] or "",
+                row["generated_at"] or "",
+                row["image_path"] or "",
+                row["sku"],
+            ]
+        )
+    wb.save(path)
+    return path
+
+
+def app_state():
+    with connect() as conn:
+        counts = {
+            row["status"]: row["count"]
+            for row in conn.execute("SELECT status, COUNT(*) AS count FROM tasks GROUP BY status")
+        }
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     return {
         "counts": counts,
         "quota": quota_state,
         "codex": api_config_state,
         "worker_running": worker_running,
         "generation": generate_status(),
+<<<<<<< HEAD
         "detail_generation": detail_status(),
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
         "statuses": STATUS_LABELS,
     }
 
@@ -2908,16 +3211,23 @@ HTTP_ROUTES = [
     ("GET", "/api/codex/status"),
     ("GET", "/api/codex/user-info"),
     ("GET", "/api/test-route"),
+<<<<<<< HEAD
     ("GET", "/api/export/source-status"),
     ("GET", "/api/export"),
     ("POST", "/api/export/source"),
+=======
+    ("GET", "/api/export"),
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     ("GET", "/api/images/{sku}"),
     ("GET", "/output/{path}"),
     ("POST", "/api/download/batch"),
     ("GET", "/api/download/main/{sku}"),
     ("GET", "/api/download/all/{sku}"),
+<<<<<<< HEAD
     ("GET", "/api/download/white/{sku}"),
     ("GET", "/api/download/detail/{sku}"),
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     ("GET", "/api/download/{sku}"),
     ("DELETE", "/api/tasks"),
     ("POST", "/api/manual"),
@@ -2925,7 +3235,10 @@ HTTP_ROUTES = [
     ("POST", "/api/collage/test"),
     ("POST", "/api/collage/{sku:path}"),
     ("POST", "/api/generate/start"),
+<<<<<<< HEAD
     ("POST", "/api/generate/detail"),
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     ("POST", "/api/generate/nine/{sku}"),
     ("POST", "/api/generate/pause"),
     ("POST", "/api/generate/stop"),
@@ -3046,6 +3359,7 @@ if FASTAPI_AVAILABLE:
         return dict(api_config_state)
 
     @app.get("/api/export")
+<<<<<<< HEAD
     def fastapi_export(table: str = "new"):
         path = export_excel(table)
         return FileResponse(
@@ -3070,6 +3384,10 @@ if FASTAPI_AVAILABLE:
         set_config("last_import_path", str(source_path.resolve()))
         set_config("last_import_table_mode", table)
         path = export_excel(table, source_path=source_path, allow_source_fallback=False)
+=======
+    def fastapi_export():
+        path = export_excel()
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
         return FileResponse(
             path,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -3112,6 +3430,7 @@ if FASTAPI_AVAILABLE:
         except Exception as exc:
             return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
 
+<<<<<<< HEAD
     @app.get("/api/download/white/{sku:path}")
     def fastapi_download_white_sku(sku: str):
         try:
@@ -3128,6 +3447,8 @@ if FASTAPI_AVAILABLE:
         except Exception as exc:
             return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
 
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     @app.get("/api/download/{sku:path}")
     def fastapi_download_sku(sku: str):
         try:
@@ -3165,15 +3486,24 @@ if FASTAPI_AVAILABLE:
             return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
     @app.post("/api/import")
+<<<<<<< HEAD
     async def fastapi_import(request: FastAPIRequest, table: str = "auto"):
+=======
+    async def fastapi_import(request: FastAPIRequest):
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
         try:
             body = await request.body()
             name = request.headers.get("X-Filename") or f"upload_{uuid.uuid4().hex}.xlsx"
             safe_name = Path(name).name
             path = IMPORT_DIR / f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
             path.write_bytes(body)
+<<<<<<< HEAD
             stats = import_excel(path, table)
             if (stats.get("imported") or stats.get("updated")) and load_api_base_url():
+=======
+            stats = import_excel(path)
+            if stats.get("imported") and load_api_base_url():
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
                 start_worker()
             return {"ok": True, "stats": stats}
         except Exception as exc:
@@ -3188,6 +3518,7 @@ if FASTAPI_AVAILABLE:
         except Exception as exc:
             return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
+<<<<<<< HEAD
     @app.post("/api/generate/detail")
     async def fastapi_generate_detail(request: FastAPIRequest):
         try:
@@ -3197,6 +3528,8 @@ if FASTAPI_AVAILABLE:
         except Exception as exc:
             return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     @app.post("/api/collage/{sku:path}")
     def fastapi_collage_sku(sku: str):
         try:
@@ -3267,19 +3600,26 @@ class Handler(BaseHTTPRequestHandler):
         with (LOG_DIR / "server.log").open("a", encoding="utf-8") as fh:
             fh.write(f"{now_iso()} {self.address_string()} {fmt % args}\n")
 
+<<<<<<< HEAD
     def write_body(self, body):
         try:
             self.wfile.write(body)
         except (ConnectionAbortedError, BrokenPipeError):
             pass
 
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     def send_json(self, data, status=200):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
+<<<<<<< HEAD
         self.write_body(body)
+=======
+        self.wfile.write(body)
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 
     def send_file(self, path, content_type="application/octet-stream", download_name=None):
         if not path.exists():
@@ -3297,7 +3637,11 @@ class Handler(BaseHTTPRequestHandler):
             )
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
+<<<<<<< HEAD
         self.write_body(body)
+=======
+        self.wfile.write(body)
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 
     def read_json(self):
         length = int(self.headers.get("Content-Length", "0"))
@@ -3313,7 +3657,11 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
+<<<<<<< HEAD
             self.write_body(body)
+=======
+            self.wfile.write(body)
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
         elif parsed.path == "/app.css":
             self.send_file(STATIC_DIR / "app.css", "text/css; charset=utf-8")
         elif parsed.path == "/app.js":
@@ -3332,11 +3680,16 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(api_config_user_info())
         elif parsed.path == "/api/test-route":
             self.send_json({"status": "ok"})
+<<<<<<< HEAD
         elif parsed.path == "/api/export/source-status":
             self.send_json(export_source_status())
         elif parsed.path == "/api/export":
             qs = parse_qs(parsed.query)
             path = export_excel(qs.get("table", ["new"])[0])
+=======
+        elif parsed.path == "/api/export":
+            path = export_excel()
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
             self.send_file(path, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", path.name)
         elif parsed.path.startswith("/api/images/"):
             sku = unquote(parsed.path.split("/api/images/", 1)[1])
@@ -3361,6 +3714,7 @@ class Handler(BaseHTTPRequestHandler):
             zip_path = zip_all_images_for_sku(sku)
             print(f"DEBUG download all route hit: sku={sku}, zip_path={zip_path}", flush=True)
             self.send_file(zip_path, "application/zip", zip_path.name)
+<<<<<<< HEAD
         elif parsed.path.startswith("/api/download/white/"):
             sku = unquote(parsed.path.split("/api/download/white/", 1)[1])
             zip_path = zip_all_images_for_sku(sku, "white")
@@ -3369,6 +3723,8 @@ class Handler(BaseHTTPRequestHandler):
             sku = unquote(parsed.path.split("/api/download/detail/", 1)[1])
             zip_path = zip_all_images_for_sku(sku, "detail")
             self.send_file(zip_path, "application/zip", zip_path.name)
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
         elif parsed.path.startswith("/api/download/"):
             sku = unquote(parsed.path.split("/api/download/", 1)[1])
             zip_path = zip_all_images_for_sku(sku)
@@ -3404,16 +3760,22 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({"ok": True})
             elif parsed.path == "/api/import":
                 self.handle_import()
+<<<<<<< HEAD
             elif parsed.path == "/api/export/source":
                 self.handle_export_source()
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
             elif parsed.path == "/api/generate/start":
                 require_api_base_url()
                 start_worker()
                 self.send_json({"ok": True})
+<<<<<<< HEAD
             elif parsed.path == "/api/generate/detail":
                 payload = self.read_json()
                 require_api_base_url()
                 self.send_json(start_detail_generation(payload.get("mode", "all"), payload.get("skus") or []))
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
             elif parsed.path == "/api/collage/test":
                 self.send_json({"status": "ok"})
             elif parsed.path.startswith("/api/collage/"):
@@ -3465,14 +3827,18 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"ok": False, "error": str(exc)}, 400)
 
     def handle_import(self):
+<<<<<<< HEAD
         parsed = urlparse(self.path)
         qs = parse_qs(parsed.query)
         table_mode = qs.get("table", ["auto"])[0]
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
         length = int(self.headers.get("Content-Length", "0"))
         name = self.headers.get("X-Filename") or f"upload_{uuid.uuid4().hex}.xlsx"
         safe_name = Path(name).name
         path = IMPORT_DIR / f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
         path.write_bytes(self.rfile.read(length))
+<<<<<<< HEAD
         stats = import_excel(path, table_mode)
         if (stats.get("imported") or stats.get("updated")) and load_api_base_url():
             start_worker()
@@ -3495,6 +3861,13 @@ class Handler(BaseHTTPRequestHandler):
         path = export_excel(table_mode, source_path=source_path, allow_source_fallback=False)
         self.send_file(path, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", path.name)
 
+=======
+        stats = import_excel(path)
+        if stats.get("imported") and load_api_base_url():
+            start_worker()
+        self.send_json({"ok": True, "stats": stats})
+
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     def handle_task_action(self, path):
         parts = path.strip("/").split("/")
         if len(parts) != 4:
@@ -3522,6 +3895,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+<<<<<<< HEAD
     parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument("--table", choices=["auto", "old", "new"], default="auto", help="Excel 表结构：old=图片生成模板，new=跨境电商统一运营模板")
     parser.add_argument("--import-excel", help="导入指定 Excel 后退出，不启动网页服务")
@@ -3532,13 +3906,18 @@ def main():
         stats = import_excel(Path(args.import_excel), args.table)
         print(json.dumps(stats, ensure_ascii=False), flush=True)
         return
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     print("Server started, waiting for requests...", flush=True)
     print(f"DEBUG app.py path: {Path(__file__).resolve()}", flush=True)
     print(f"DEBUG cwd: {Path.cwd()}", flush=True)
     print(f"DEBUG server mode: {'FastAPI' if FASTAPI_AVAILABLE else 'fallback-http'}", flush=True)
     ensure_admin()
     init_db()
+<<<<<<< HEAD
     set_config("table_mode", args.table)
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     api_base_url = load_api_base_url()
     print_local_api_config()
     if not api_base_url:

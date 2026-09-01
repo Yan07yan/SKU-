@@ -268,15 +268,23 @@ tr:hover {
   color: #1e40af;
 }
 
+<<<<<<< HEAD
 .status.collaging,
 .status.detail_generating {
+=======
+.status.collaging {
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
   background: #fef3c7;
   color: #92400e;
 }
 
 .status.awaiting_confirm,
+<<<<<<< HEAD
 .status.waiting_confirm,
 .status.detail_done {
+=======
+.status.waiting_confirm {
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
   background: #e0f2fe;
   color: #075985;
 }
@@ -287,7 +295,10 @@ tr:hover {
 }
 
 .status.failed,
+<<<<<<< HEAD
 .status.detail_failed,
+=======
+>>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 .status.quality_failed,
 .status.rejected {
   background: #fee2e2;
