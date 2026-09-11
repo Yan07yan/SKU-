@@ -2,6 +2,7 @@
   "table_mode": "auto",
   "api_base_url": "http://127.0.0.1:62508/v1",
   "access_token": "agt_codex_eo186AXsKgJJrCEWBSm28SzVRW2R6UdR",
-  "last_import_path": "C:\\Users\\yan\\Documents\\ChatGPT\\自动化上架\\imports\\20260901_203036_%E8%B7%A8%E5%A2%83%E7%94%B5%E5%95%86%E7%BB%9F%E4%B8%80%E8%BF%90%E8%90%A5%E6%A8%A1%E6%9D%BF.xlsx",
-  "last_import_table_mode": "auto"
+  "last_import_path": "C:\\Users\\yan\\Documents\\ChatGPT\\自动化上架\\imports\\20260911_222339_%E8%B7%A8%E5%A2%83%E7%94%B5%E5%95%86%E7%BB%9F%E4%B8%80%E8%BF%90%E8%90%A5%E6%A8%A1%E6%9D%BF.xlsx",
+  "last_import_table_mode": "auto",
+  "image_model": "gpt-image-2"
 }

@@ -7,10 +7,7 @@ const state = {
   codex: { authenticated: false, message: "正在检测 Codex 本地服务配置状态..." },
   apiKeyInfo: { authenticated: false, has_api_base_url: false },
   generation: { state: "idle", completed: 0, total: 0 },
-<<<<<<< HEAD
   detailGeneration: { state: "idle", completed: 0, total: 0 },
-=======
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
   preview: { sku: null, images: [], index: 0 },
 };
 const labels = {
@@ -22,12 +19,9 @@ const labels = {
   quality_failed: "质检失败",
   waiting_confirm: "待确认",
   awaiting_confirm: "待确认",
-<<<<<<< HEAD
   detail_generating: "详情页生成中",
   detail_done: "详情页完成",
   detail_failed: "详情页失败",
-=======
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
   approved: "已通过",
   rejected: "已驳回",
   failed: "真失败",
@@ -81,13 +75,10 @@ function expectedImageUrls(task) {
       return { name, url: imageUrl(`${folder}/${name}`) };
     }),
     { name: "主图.png", url: imageUrl(task.image_path || `${folder}/主图.png`) },
-<<<<<<< HEAD
     ...Array.from({ length: 6 }, (_, index) => {
       const name = `detail_${index + 1}.png`;
       return { name, url: imageUrl(`${folder}/${name}`) };
     }),
-=======
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
   ].filter((item) => item.url);
 }
 
@@ -115,10 +106,7 @@ async function refresh() {
   state.statuses = appState.statuses;
   state.codex = appState.codex || state.codex;
   state.generation = appState.generation || state.generation;
-<<<<<<< HEAD
   state.detailGeneration = appState.detail_generation || state.detailGeneration;
-=======
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
   renderState(appState);
   renderCodexAuth(state.codex);
   renderFilters(appState.counts);
@@ -208,10 +196,7 @@ function renderState(appState) {
   const text = quota.status === "available" ? "绿色充足" : quota.status === "exhausted" ? "红色耗尽" : "未知";
   badge.textContent = `额度：${text} · ${quota.message || ""}`;
   renderGenerationControls(appState.generation || state.generation);
-<<<<<<< HEAD
   renderDetailControls(appState.detail_generation || state.detailGeneration, counts);
-=======
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 }
 
 function renderGenerationControls(generation) {
@@ -233,7 +218,6 @@ function renderGenerationControls(generation) {
   progress.textContent = `队列：${labelMap[stateName] || stateName} · 已完成 ${completed}/${total}`;
 }
 
-<<<<<<< HEAD
 function renderDetailControls(detailGeneration, counts = {}) {
   const button = document.querySelector("#detailGenerateBtn");
   if (!button) return;
@@ -247,8 +231,6 @@ function renderDetailControls(detailGeneration, counts = {}) {
   }
 }
 
-=======
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 function renderFilters(counts) {
   const wrap = document.querySelector("#filters");
   const allCount = Object.values(counts || {}).reduce((sum, value) => sum + value, 0);
@@ -347,7 +329,6 @@ async function downloadSelectedImages() {
   URL.revokeObjectURL(url);
 }
 
-<<<<<<< HEAD
 function filenameFromResponse(response, fallback) {
   const disposition = response.headers.get("content-disposition") || "";
   const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
@@ -402,8 +383,6 @@ function pickExcelFile() {
   });
 }
 
-=======
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 async function deleteSelectedTasks() {
   const skus = selectedSkuList();
   if (!skus.length) {
@@ -420,7 +399,6 @@ async function deleteSelectedTasks() {
   await refresh();
 }
 
-<<<<<<< HEAD
 async function generateDetailImages() {
   if (!(await ensureCodexReady())) return;
   const selected = selectedSkuList();
@@ -443,27 +421,17 @@ async function generateDetailImages() {
   await refresh();
 }
 
-=======
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 function actionsFor(task) {
   const id = task.id;
   const recollage = canRecollage(task) ? `<button data-id="${id}" data-action="recollage">重新拼图</button>` : "";
   const download = task.image_path
     ? `
-<<<<<<< HEAD
       <button data-id="${id}" data-action="download-white">下载白底图</button>
       <button data-id="${id}" data-action="download-detail">下载详情页</button>
       <button data-id="${id}" data-action="download-all">下载全部</button>
       <span class="image-count" title="包含 1~9.png、主图.png 和 detail_1~6.png">最多16张图</span>
     `
     : `<button disabled title="图片未生成">下载白底图</button><button disabled title="图片未生成">下载详情页</button><button disabled title="图片未生成">下载全部</button>`;
-=======
-      <button data-id="${id}" data-action="download-main">下载主图</button>
-      <button data-id="${id}" data-action="download-all">下载全部</button>
-      <span class="image-count" title="包含 1~9.png 和主图.png">共10张图</span>
-    `
-    : `<button disabled title="图片未生成">下载主图</button><button disabled title="图片未生成">下载全部</button>`;
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
   if (task.status === "awaiting_confirm" || task.status === "waiting_confirm") {
     return `
       <button class="ok" data-id="${id}" data-action="approve">通过</button>
@@ -495,18 +463,13 @@ async function taskAction(id, action) {
     queue: "queue",
     "quality-fail": "quality-fail",
   };
-<<<<<<< HEAD
   if (action === "download-main" || action === "download-all" || action === "download-white" || action === "download-detail") {
-=======
-  if (action === "download-main" || action === "download-all") {
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     const task = state.tasks.find((item) => String(item.id) === String(id));
     if (!task || !task.image_path) {
       alert("图片未生成");
       return;
     }
     const encodedSku = encodeURIComponent(task.sku);
-<<<<<<< HEAD
     const downloadMap = {
       "download-main": "main",
       "download-all": "all",
@@ -514,10 +477,6 @@ async function taskAction(id, action) {
       "download-detail": "detail",
     };
     window.location.href = `/api/download/${downloadMap[action]}/${encodedSku}`;
-=======
-    window.location.href =
-      action === "download-main" ? `/api/download/main/${encodedSku}` : `/api/download/all/${encodedSku}`;
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
     return;
   }
   if (action === "recollage") {
@@ -687,11 +646,8 @@ document.querySelector("#selectAllRows").addEventListener("change", (event) => {
 
 document.querySelector("#batchDownloadBtn").addEventListener("click", downloadSelectedImages);
 document.querySelector("#deleteSelectedBtn").addEventListener("click", deleteSelectedTasks);
-<<<<<<< HEAD
 document.querySelector("#detailGenerateBtn").addEventListener("click", generateDetailImages);
 document.querySelector("#exportExcelBtn").addEventListener("click", exportExcel);
-=======
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 
 document.querySelector("#apiKeyOpenBtn").addEventListener("click", showApiKeyDialog);
 document.querySelector("#apiKeyCancel").addEventListener("click", () => {
@@ -791,7 +747,6 @@ async function requeueSku(skuOrId) {
   await taskAction(task.id, "queue");
 }
 
-<<<<<<< HEAD
 async function exportExcel() {
   try {
     const source = await api("/api/export/source-status");
@@ -821,10 +776,6 @@ async function exportExcel() {
   } catch (error) {
     alert(error.message || error);
   }
-=======
-function exportExcel() {
-  window.location.href = "/api/export";
->>>>>>> 0afc0ab16f9d6e1a79023e8edd542d3d99d93f8e
 }
 
 window.generateImage = generateImage;
