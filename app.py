@@ -26,7 +26,7 @@ from urllib.request import Request as UrlRequest, urlopen
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
-from PIL import Image
+from PIL import Image, ImageOps
 
 try:
     import requests
@@ -97,6 +97,9 @@ IMAGE_DELAY_SECONDS = 3
 IMAGE_TIMEOUT_SECONDS = 900
 HTTP_IMAGE_TIMEOUT_SECONDS = 300
 MODEL_DETECT_TIMEOUT_SECONDS = 30
+OUTPUT_IMAGE_SIZE = (900, 1200)
+OUTPUT_IMAGE_SIZE_TEXT = "900x1200"
+API_IMAGE_SIZE_CANDIDATES = ("900x1200", "768x1024", "1024x1792", "1024x1024")
 LOCAL_IMAGE_PATHS = (
     "/v1/images/generations",
     "/api/images/generations",
@@ -422,6 +425,10 @@ def import_excel(path, table_mode="auto"):
             )
             product_name = pick_field(data, ["商品名称", "产品名称", "标题", "品名", "Name"])
             prompt = pick_field(data, ["图片生成提示词", "生图提示词", "Prompt", "prompt", "提示词"])
+            print(
+                f"DEBUG import prompt: sku={sku}, prompt_length={len(prompt)}, prompt_preview={prompt[:200]}",
+                flush=True,
+            )
             color_code = pick_field(data, ["颜色编号", "色号", "Color Code", "color_code"])
             if not color_code and image_name and "_" in image_name:
                 color_code = image_name.split("_", 1)[0]
@@ -701,16 +708,21 @@ def zip_filename_for_skus(skus):
 def build_codex_prompt(task, image_file):
     product_name = task["product_name"] or task["sku"]
     user_prompt = task["prompt"] or product_name
-    return f"""
+    built_prompt = f"""
 Use case: product-mockup
 Asset type: ecommerce main product image
 Primary request: {user_prompt}
 Subject: {product_name}
 Style/medium: clean commercial product photography
-Composition/framing: square 1024x1024 main image, centered product, clear edges
+Composition/framing: 900x1200 portrait 3:4 main image, vertical composition, centered product, clear edges, platform-ready aspect ratio
 Lighting/mood: polished studio lighting, realistic shadows
 Constraints: no watermark, no extra text, no logos unless explicitly requested by the prompt
 """.strip()
+    print(
+        f"DEBUG build_codex_prompt: sku={task.get('sku')}, source_prompt_length={len(str(user_prompt or ''))}, built_prompt_length={len(built_prompt)}",
+        flush=True,
+    )
+    return built_prompt
 
 
 def encode_config_value(value):
@@ -1021,6 +1033,58 @@ def payload_without_model(payload):
     return payload_copy
 
 
+def size_payload_error(exc):
+    text = str(exc or "").lower()
+    return any(
+        marker in text
+        for marker in (
+            "size",
+            "尺寸",
+            "分辨率",
+            "resolution",
+            "unsupported image size",
+            "invalid image size",
+            "unsupported size",
+            "invalid size",
+        )
+    )
+
+
+def image_size_candidates():
+    cached = get_config("image_size")
+    candidates = []
+    if cached:
+        candidates.append(cached)
+    for size in API_IMAGE_SIZE_CANDIDATES:
+        if size not in candidates:
+            candidates.append(size)
+    return candidates
+
+
+def post_local_image_api_with_size_fallback(api_base_url, payload, headers, model_candidates=None):
+    last_exc = None
+    for index, size in enumerate(image_size_candidates()):
+        sized_payload = {**payload, "size": size}
+        print(f"DEBUG trying image size: {size}", flush=True)
+        try:
+            data = post_local_image_api_with_model_fallback(api_base_url, sized_payload, headers, model_candidates)
+            if get_config("image_size") != size:
+                set_config("image_size", size)
+            print(f"DEBUG selected image size: {size}", flush=True)
+            return data, size
+        except Exception as exc:
+            last_exc = exc
+            print(f"DEBUG image size failed: {size}; error={exc}", flush=True)
+            if index == 0 and get_config("image_size") == size:
+                set_config("image_size", "")
+            if not size_payload_error(exc):
+                raise
+            continue
+    if last_exc:
+        raise last_exc
+    raise RuntimeError("没有可用的图片生成尺寸")
+
+
 def post_local_image_api_with_model_fallback(api_base_url, payload, headers, model_candidates=None):
     try:
         return post_local_image_api(api_base_url, payload, headers)
@@ -1263,23 +1327,26 @@ def reference_payload_variants(base_payload, reference):
 def call_image_api(prompt, image_file, reference_image_path=""):
     api_base_url = require_api_base_url()
     image_model, available_models = detect_available_model(api_base_url)
+    debug_prompt_log("call_image_api_input", prompt)
     reference, reference_note = reference_payload(reference_image_path)
     base_payload = {
         "prompt": prompt + reference_note,
-        "size": "1024x1024",
+        "size": OUTPUT_IMAGE_SIZE_TEXT,
         "n": 1,
     }
+    debug_prompt_log("cockpit_payload_prompt", base_payload["prompt"])
     if image_model:
         base_payload["model"] = image_model
     headers = local_api_headers(image_model)
     if available_models:
         print(f"DEBUG image model candidates: {available_models}", flush=True)
+    requested_size = base_payload["size"]
     if reference:
         last_reference_error = None
         for variant_name, payload in reference_payload_variants(base_payload, reference):
             print(f"DEBUG trying reference image field format: {variant_name}", flush=True)
             try:
-                data = post_local_image_api_with_model_fallback(api_base_url, payload, headers, available_models)
+                data, requested_size = post_local_image_api_with_size_fallback(api_base_url, payload, headers, available_models)
                 print(f"DEBUG reference image field format succeeded: {variant_name}", flush=True)
                 break
             except Exception as exc:
@@ -1290,13 +1357,14 @@ def call_image_api(prompt, image_file, reference_image_path=""):
                 f"DEBUG all reference image payload formats failed, retrying text-only: {last_reference_error}",
                 flush=True,
             )
-            data = post_local_image_api_with_model_fallback(api_base_url, base_payload, headers, available_models)
+            data, requested_size = post_local_image_api_with_size_fallback(api_base_url, base_payload, headers, available_models)
     else:
-        data = post_local_image_api_with_model_fallback(api_base_url, base_payload, headers, available_models)
+        data, requested_size = post_local_image_api_with_size_fallback(api_base_url, base_payload, headers, available_models)
 
     item = (data.get("data") or [{}])[0]
     if item.get("b64_json"):
         image_file.write_bytes(base64.b64decode(item["b64_json"]))
+        normalize_output_image_size(image_file, requested_size)
         return
     if item.get("url"):
         if requests is not None:
@@ -1308,6 +1376,7 @@ def call_image_api(prompt, image_file, reference_image_path=""):
             image_request = UrlRequest(item["url"], headers=headers, method="GET")
             with urlopen(image_request, timeout=HTTP_IMAGE_TIMEOUT_SECONDS) as response:
                 image_file.write_bytes(response.read())
+        normalize_output_image_size(image_file, requested_size)
         return
     raise RuntimeError("本地图片 API 返回为空，未找到图片数据")
 
@@ -1321,17 +1390,41 @@ def generate_single_image(prompt, image_file, reference_image_path=""):
     return call_image_api(prompt, image_file, reference_image_path)
 
 
+def normalize_output_image_size(image_file, requested_size=None):
+    with Image.open(image_file) as image:
+        actual_size = image.size
+        if actual_size != OUTPUT_IMAGE_SIZE:
+            resized = ImageOps.fit(
+                image.convert("RGB"),
+                OUTPUT_IMAGE_SIZE,
+                method=Image.LANCZOS,
+                centering=(0.5, 0.5),
+            )
+            resized.save(image_file)
+            resized.close()
+        print(
+            f"DEBUG image size: requested={requested_size or 'unknown'}, "
+            f"actual={actual_size[0]}x{actual_size[1]}, resized={OUTPUT_IMAGE_SIZE_TEXT}",
+            flush=True,
+        )
+        return actual_size
+
+
 def compose_nine_grid(image_files, output_file):
+    cell_size = (OUTPUT_IMAGE_SIZE[0] // 3, OUTPUT_IMAGE_SIZE[1] // 3)
     images = [Image.open(path).convert("RGB") for path in image_files]
-    width, height = images[0].size
-    canvas = Image.new("RGB", (width * 3, height * 3), "white")
+    canvas = Image.new("RGB", OUTPUT_IMAGE_SIZE, "white")
     for index, image in enumerate(images):
-        if image.size != (width, height):
-            image = image.resize((width, height))
-        x = (index % 3) * width
-        y = (index // 3) * height
+        if image.size != cell_size:
+            image = ImageOps.fit(image, cell_size, method=Image.LANCZOS, centering=(0.5, 0.5))
+        x = (index % 3) * cell_size[0]
+        y = (index // 3) * cell_size[1]
         canvas.paste(image, (x, y))
     canvas.save(output_file)
+    print(
+        f"DEBUG image size: requested=collage, actual={OUTPUT_IMAGE_SIZE_TEXT}, resized={OUTPUT_IMAGE_SIZE_TEXT}",
+        flush=True,
+    )
     for image in images:
         image.close()
 
@@ -1663,7 +1756,7 @@ Base product prompt: {base_prompt}
 Detail image {index}: {detail_kind}
 Scene requirement: {scene_text}
 Visual style: {style_text}
-Composition: square 1024x1024, full or partial body model wearing the pants, clear product focus, pure white or clean studio background, realistic lighting, no watermark, no irrelevant text.
+Composition: 900x1200 portrait 3:4 image, vertical composition, full or partial body model wearing the pants, clear product focus, pure white or clean studio background, realistic lighting, no watermark, no irrelevant text.
 Positive requirements: model wearing display, on-body effect, real human model wearing the product, show pants fit, smooth silky fabric texture, natural drape and material details.
 Keep product identity, colors, materials and brand elements consistent with the white-background images.
 """.strip()
@@ -1675,7 +1768,7 @@ Base product prompt: {base_prompt}
 Detail image {index}: {detail_kind}
 Scene requirement: {scene_text}
 Visual style: {style_text}
-Composition: square 1024x1024, flat lay or close-up still-life product photography, clear product focus, realistic lighting, no watermark, no irrelevant text.
+Composition: 900x1200 portrait 3:4 image, vertical composition, flat lay or close-up still-life product photography, clear product focus, realistic lighting, no watermark, no irrelevant text.
 Texture requirements: close-up fabric texture, smooth material surface, textile detail display, stitching and craft details when applicable.
 Keep product identity, colors, materials and brand elements consistent with the white-background images.
 Strict constraints: no human, no model, no mannequin, no body parts, no wearing-on-body scene, no outfit lookbook, no lifestyle person shot.
@@ -1691,6 +1784,14 @@ def detail_prompt_type(index, detail_mode="平铺细节"):
     if 1 <= index <= len(prompt_types):
         return prompt_types[index - 1]
     return (f"detail_{index}.png", f"补充详情图 — 第 {index} 张产品静物细节展示")
+
+
+def debug_prompt_log(stage, prompt, sku=None):
+    text = str(prompt or "")
+    sku_part = f" sku={sku}" if sku else ""
+    print(f"DEBUG prompt meta:{sku_part} stage={stage}", flush=True)
+    print(f"DEBUG prompt length: {len(text)} chars", flush=True)
+    print(f"DEBUG prompt full: {text}", flush=True)
 
 
 def run_detail_for_task(task):
@@ -1720,8 +1821,10 @@ def run_detail_for_task(task):
                 )
             if image_file.exists():
                 print(f"DEBUG detail image exists, skipped: sku={task.get('sku')} file={image_file}", flush=True)
+                normalize_output_image_size(image_file, "existing")
             else:
                 prompt = build_detail_prompt(task, detail_kind, index)
+                debug_prompt_log(f"detail_{index}_before_send", prompt, task.get("sku"))
                 generate_single_image(prompt, image_file, task.get("reference_image_path") or "")
             if not image_file.exists():
                 raise RuntimeError(f"第 {index} 张详情页图片未生成")
@@ -2663,6 +2766,11 @@ def excel_task_from_row(row_index, data):
     spu = str(data.get("SPU") or sku).strip()
     status = excel_status_to_internal(data.get("执行状态"))
     image_folder = str(data.get("输出文件地址") or "").strip()
+    prompt = str(data.get("图片生成提示词") or "").strip()
+    print(
+        f"DEBUG import prompt: sku={sku}, prompt_length={len(prompt)}, prompt_preview={prompt[:200]}",
+        flush=True,
+    )
     if image_folder and Path(image_folder).suffix:
         image_path = image_folder
         image_folder = str(Path(image_folder).parent)
@@ -2673,7 +2781,7 @@ def excel_task_from_row(row_index, data):
         "sku": sku,
         "spu": spu,
         "product_name": str(data.get("产品名称") or data.get("商品名称") or "").strip(),
-        "prompt": str(data.get("图片生成提示词") or "").strip(),
+        "prompt": prompt,
         "color_name": str(data.get("图片颜色列表") or data.get("图片颜色") or "").strip(),
         "image_name": "",
         "add_logo": str(data.get("是否添加品牌logo") or "").strip(),
@@ -3082,7 +3190,10 @@ def run_detail_for_task(task):
             image_file = sku_dir / filename
             if not image_file.exists():
                 prompt = build_detail_prompt(task, detail_kind, index)
+                debug_prompt_log(f"detail_{index}_before_send", prompt, task.get("sku"))
                 generate_single_image(prompt, image_file, task.get("reference_image_path") or "")
+            else:
+                normalize_output_image_size(image_file, "existing")
         save_task_fields(task, 执行状态="已完成", 生成时间=now_iso(), 执行日志="")
         return True
     except Exception as exc:
@@ -3105,16 +3216,23 @@ def run_image_for_task(task):
         if not base_file.exists():
             first_color = colors[0] if colors else ""
             first_prompt = f"{optimized_prompt}\nWhite background ecommerce product image, product centered.\nRequired product color/material element: {first_color}."
+            debug_prompt_log("white_image_1_before_send", first_prompt, task.get("sku"))
             generate_single_image(first_prompt, base_file, task.get("reference_image_path") or "")
+        else:
+            normalize_output_image_size(base_file, "existing")
         image_files.append(base_file)
         for index, color in enumerate(colors[1:], start=2):
             image_file = sku_dir / f"{index}.png"
             if not image_file.exists():
                 if use_recolor:
                     recolor_image(base_file, image_file, color, task.get("sku") or "", colors[0] if colors else "红")
+                    normalize_output_image_size(image_file, "recolor")
                 else:
                     prompt = f"{optimized_prompt}\nWhite background ecommerce product image, product centered.\nRequired product color/material element: {color}."
+                    debug_prompt_log(f"white_image_{index}_before_send", prompt, task.get("sku"))
                     generate_single_image(prompt, image_file, task.get("reference_image_path") or "")
+            else:
+                normalize_output_image_size(image_file, "existing")
             image_files.append(image_file)
         for index in range(len(image_files) + 1, 10):
             filler = sku_dir / f"{index}.png"
